@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.6
+
+- Restored optional EVA biome creatures with config toggles (default **on**): `DeepNorthCreatures`, `AshlandsCreatures`, `OceanCreatures`.
+- Spawns match original EVA rates (chance, caps, intervals). Draugr Mariner still requires the `Killed_Jotunn` world key.
+- `EVA_cleanup confirm` removes creature instances when their toggle is off.
+
 ## 2.2.5
 
 - Startup log uses the real plugin version.

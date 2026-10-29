@@ -25,6 +25,16 @@ Three optional bosses return, each with an altar and vegvisir in its associated 
 - **Hel Demon (Blazing Damned One)** — Ashlands
 - **Jotunn** — Deep North
 
+### 🐾 Optional Biome Creatures (default on)
+
+| Toggle | Creatures |
+|--------|-----------|
+| `DeepNorthCreatures` | Frostwing Fae, Crystalhide Ursar (+ cub) |
+| `AshlandsCreatures` | Magma Skarab, Infernal Minotaur |
+| `OceanCreatures` | Draugr Mariner (after Jotunn is defeated — requires world key `Killed_Jotunn`) |
+
+Spawns use the original EVA chance and caps. Turn a toggle off and run `EVA_cleanup confirm` to remove existing instances.
+
 ### 🪙 Golden Minibosses
 
 - Golden miniboss encounters in the Meadows, Black Forest, and Swamp.
@@ -48,7 +58,7 @@ Boss health and attack values can be customized through JSON configuration files
 To keep this rebuild focused and preserve vanilla biome content, the following features have been removed:
 
 - Weapons and ores
-- Vegetation and additional creatures
+- Vegetation
 - Thor's Forge
 - Overrides to vanilla Ashlands and Deep North content
 
@@ -102,14 +112,11 @@ Configuration files are located in:
 | File | Purpose |
 |---|---|
 | `Huntard.EpicValheimsAdditions.json` | Boss health and attack values |
-| `Huntard.EpicValheimsAdditions_Content.json` | Boss availability, golden minibosses, and cooldown settings |
+| `Huntard.EpicValheimsAdditions_Content.json` | Bosses, creatures, golden minibosses, cooldown |
 
-Available content toggles:
+Boss toggles: `MistlandsBoss`, `AshlandsBoss`, `DeepNorthBoss`, `GoldenMinibosses`
 
-- `MistlandsBoss`
-- `AshlandsBoss`
-- `DeepNorthBoss`
-- `GoldenMinibosses`
+Creature toggles (default **true**): `DeepNorthCreatures`, `AshlandsCreatures`, `OceanCreatures`
 
 ### Custom Loot
 

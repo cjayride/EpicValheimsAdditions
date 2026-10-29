@@ -5,9 +5,9 @@ namespace EpicValheimsAdditions;
 [Serializable]
 public class CreatureConfiguration
 {
-	public bool DeepNorthCreatures { get; set; }
+	public bool DeepNorthCreatures { get; set; } = true;
 
-	public bool AshlandsCreatures { get; set; }
+	public bool AshlandsCreatures { get; set; } = true;
 
-	public bool OceanCreatures { get; set; }
+	public bool OceanCreatures { get; set; } = true;
 }

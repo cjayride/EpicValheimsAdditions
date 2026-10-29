@@ -17,7 +17,7 @@ namespace EpicValheimsAdditions;
 public class Core : BaseUnityPlugin
 {
 	public const string ModName = "Epic Valheims Additions - by Huntard";
-	public const string ModVersion = "2.2.5";
+	public const string ModVersion = "2.2.6";
 	public const string ModGUID = "Huntard.EpicValheimsAdditions";
 
 	public static string configPath = Path.Combine(BepInEx.Paths.ConfigPath, "Huntard.EpicValheimsAdditions.json");
@@ -25,20 +25,28 @@ public class Core : BaseUnityPlugin
 
 	internal static BepInEx.Logging.ManualLogSource Log;
 
+	internal static CreatureConfiguration GetCreatureConfiguration()
+	{
+		return s_contentConfig?.Creatures;
+	}
+
 	private AssetBundle assetBundle;
 	private readonly List<string> sfxAssetNames = new List<string>();
 	private EVAConfiguration contentConfig;
 
+	private static EVAConfiguration s_contentConfig;
+
 	private readonly string contentDescription =
-		"EVA 2.2+ keeps only the three custom bosses, three golden minibosses, their altars, and vegvisirs. " +
-		"MistlandsBoss / DeepNorthBoss / AshlandsBoss / GoldenMinibosses toggle those encounters. " +
-		"GoldenMinibossCooldownMinutes sets real-time altar cooldown after a kill (default 120). " +
-		"Weapons, ores, vegetation, and EVA creatures are retired. Use EVA_cleanup confirm to strip them from existing worlds.";
+		"EVA 2.2+ adds three optional bosses, golden minibosses, altars, vegvisirs, and optional biome creatures. " +
+		"Boss toggles: MistlandsBoss / DeepNorthBoss / AshlandsBoss / GoldenMinibosses. " +
+		"Creature toggles: DeepNorthCreatures / AshlandsCreatures / OceanCreatures (default on). " +
+		"GoldenMinibossCooldownMinutes sets altar cooldown after a golden kill (default 120). " +
+		"Use EVA_cleanup confirm to strip retired EVA objects (including creatures when their toggles are off).";
 
 	private void Awake()
 	{
 		Log = Logger;
-		Logger.LogInfo("Loading EVA " + ModVersion + " (bosses, minibosses, altars, vegvisirs only)...");
+		Logger.LogInfo("Loading EVA " + ModVersion + "...");
 		assetBundle = AssetUtils.LoadAssetBundleFromResources("eva_assets", typeof(Core).Assembly);
 		if (assetBundle == null)
 		{
@@ -47,10 +55,12 @@ public class Core : BaseUnityPlugin
 		}
 
 		contentConfig = LoadContentConfig();
+		s_contentConfig = contentConfig;
 		GoldenMinibossCooldown.CooldownMinutes = contentConfig.GoldenMinibossCooldownMinutes;
 		new Harmony(ModGUID).PatchAll(typeof(GoldenMinibossCooldown).Assembly);
 		RegisterSupportPrefabs();
 		RegisterEncounters();
+		EvaCreatures.Register(assetBundle, contentConfig.Creatures, RegisterPrefab);
 		RegisterSummonItems();
 		Commands.Register();
 
@@ -456,6 +466,27 @@ public class Core : BaseUnityPlugin
 			attacks["Golden_Wraith_Miniboss"] = new List<string> { "wraith_melee_gold" };
 		}
 
+		if (contentConfig.Creatures?.DeepNorthCreatures == true)
+		{
+			attacks["FrostwingFae"] = new List<string> { "Fairy_Attack1" };
+			attacks["CrystalhideUrsar"] = new List<string> { "Bear_Attack1" };
+			attacks["CrystalhideUrsar_Cub"] = new List<string> { "Bear_Attack_cub" };
+		}
+
+		if (contentConfig.Creatures?.AshlandsCreatures == true)
+		{
+			attacks["MagmaSkarab"] = new List<string> { "Skarab_Attack1" };
+			attacks["InfernalMinotaur"] = new List<string>
+			{
+				"Minotaur_Attack1", "Minotaur_Attack2", "Minotaur_Attack3", "Minotaur_Attack4_kick"
+			};
+		}
+
+		if (contentConfig.Creatures?.OceanCreatures == true)
+		{
+			attacks["DraugrMariner"] = new List<string> { "Mariner_Attack1", "Mariner_Attack2" };
+		}
+
 		return attacks;
 	}
 
@@ -630,7 +661,16 @@ public class Core : BaseUnityPlugin
 		EVAConfiguration loaded = list[0];
 		if (loaded.Bosses != null)
 		{
-			Logger.LogInfo("Loaded content configuration.");
+			if (EnsureCreaturesSection(loaded))
+			{
+				SaveEVAConfiguration(loaded);
+				Logger.LogInfo("Added default creature toggles to content configuration.");
+			}
+			else
+			{
+				Logger.LogInfo("Loaded content configuration.");
+			}
+
 			return loaded;
 		}
 
@@ -644,10 +684,12 @@ public class Core : BaseUnityPlugin
 					MistlandsBoss = loaded.Locations?.MistlandsLocations ?? loaded.Content?.Mistlands ?? true,
 					DeepNorthBoss = loaded.Locations?.DeepNorthLocations ?? loaded.Content?.DeepNorth ?? true,
 					AshlandsBoss = loaded.Locations?.AshlandsLocations ?? loaded.Content?.Ashlands ?? true,
-					GoldenMinibosses = true
-				}
-			};
-			SaveEVAConfiguration(fromNested);
+				GoldenMinibosses = true
+			},
+			Creatures = GetDefaultCreatureConfiguration(),
+			GoldenMinibossCooldownMinutes = 120
+		};
+		SaveEVAConfiguration(fromNested);
 			Logger.LogInfo("Migrated nested content configuration to boss-only toggles.");
 			return fromNested;
 		}
@@ -663,7 +705,9 @@ public class Core : BaseUnityPlugin
 				DeepNorthBoss = old?.DeepNorthLocations ?? old?.DeepNorth ?? true,
 				AshlandsBoss = old?.AshlandsLocations ?? old?.Ashlands ?? true,
 				GoldenMinibosses = true
-			}
+			},
+			Creatures = GetDefaultCreatureConfiguration(),
+			GoldenMinibossCooldownMinutes = 120
 		};
 		SaveEVAConfiguration(migrated);
 		Logger.LogInfo("Migrated old content configuration to boss-only toggles.");
@@ -688,8 +732,30 @@ public class Core : BaseUnityPlugin
 				AshlandsBoss = true,
 				GoldenMinibosses = true
 			},
-			GoldenMinibossCooldownMinutes = 120
+			GoldenMinibossCooldownMinutes = 120,
+			Creatures = GetDefaultCreatureConfiguration()
 		};
+	}
+
+	private static CreatureConfiguration GetDefaultCreatureConfiguration()
+	{
+		return new CreatureConfiguration
+		{
+			DeepNorthCreatures = true,
+			AshlandsCreatures = true,
+			OceanCreatures = true
+		};
+	}
+
+	private static bool EnsureCreaturesSection(EVAConfiguration loaded)
+	{
+		if (loaded.Creatures != null)
+		{
+			return false;
+		}
+
+		loaded.Creatures = GetDefaultCreatureConfiguration();
+		return true;
 	}
 
 	internal static List<T> GetJson<T>(string path)

@@ -35,9 +35,6 @@ public static class Commands
 		"EVA_BurningTree1", "EVA_BurningTree2", "EVA_BurningTree3",
 		"EVA_BurningBush1", "EVA_BurningBush2", "EVA_BurningBush3",
 		"Pickable_Emberbloom",
-		"CrystalhideUrsar", "CrystalhideUrsar_Cub", "FrostwingFae",
-		"MagmaSkarab", "InfernalMinotaur", "DraugrMariner",
-		"FrostBear_Ragdoll", "FrostBear_Ragdoll_Cub", "Minotaur_Ragdoll", "Skarab_Ragdoll",
 		"piece_alchemystation", "piece_thorsforge", "Sapling_Emberbloom",
 		"Heavyscale", "Drakescale", "Forgedscale",
 		"OreHeavymetal", "HeavymetalBar", "OreFrometal", "FrometalBar",
@@ -105,7 +102,7 @@ public static class Commands
 			return;
 		}
 
-		int removed = RemoveRetiredZdos();
+		int removed = RemoveRetiredZdos(Core.GetCreatureConfiguration());
 		args.Context.AddString("EVA_cleanup removed " + removed + " retired ZDOs.");
 		Core.Log.LogInfo("EVA_cleanup removed " + removed + " retired ZDOs.");
 
@@ -150,7 +147,7 @@ public static class Commands
 		return Chainloader.PluginInfos != null && Chainloader.PluginInfos.ContainsKey(UpgradeWorldGuid);
 	}
 
-	private static int RemoveRetiredZdos()
+	private static int RemoveRetiredZdos(CreatureConfiguration creatures)
 	{
 		if (ZDOMan.instance == null)
 		{
@@ -161,6 +158,28 @@ public static class Commands
 		foreach (string name in RetiredPrefabs)
 		{
 			retired.Add(name.GetStableHashCode());
+		}
+
+		if (creatures != null)
+		{
+			if (!creatures.DeepNorthCreatures)
+			{
+				AddPrefabHashes(retired, EvaCreatures.DeepNorthPrefabs);
+				retired.Add("FrostBear_Ragdoll".GetStableHashCode());
+				retired.Add("FrostBear_Ragdoll_Cub".GetStableHashCode());
+			}
+
+			if (!creatures.AshlandsCreatures)
+			{
+				AddPrefabHashes(retired, EvaCreatures.AshlandsPrefabs);
+				retired.Add("Minotaur_Ragdoll".GetStableHashCode());
+				retired.Add("Skarab_Ragdoll".GetStableHashCode());
+			}
+
+			if (!creatures.OceanCreatures)
+			{
+				AddPrefabHashes(retired, EvaCreatures.OceanPrefabs);
+			}
 		}
 
 		List<ZDO> matches = new List<ZDO>();
@@ -180,5 +199,13 @@ public static class Commands
 		}
 
 		return matches.Count;
+	}
+
+	private static void AddPrefabHashes(HashSet<int> retired, string[] prefabNames)
+	{
+		foreach (string name in prefabNames)
+		{
+			retired.Add(name.GetStableHashCode());
+		}
 	}
 }
