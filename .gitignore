@@ -1,0 +1,11 @@
+bin/
+obj/
+dist/
+Environment.props
+*.user
+.vs/
+*.zip
+_strings*.ps1
+_inspect*.ps1
+_jotunn*.ps1
+_boss_hp.ps1

@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <VALHEIM_INSTALL>D:\SteamLibrary\steamapps\common\Valheim</VALHEIM_INSTALL>
+    <JOTUNN_DLL>C:\Users\YOU\AppData\Roaming\com.kesomannen.gale\valheim\profiles\default\BepInEx\plugins\ValheimModding-Jotunn\Jotunn.dll</JOTUNN_DLL>
+  </PropertyGroup>
+</Project>

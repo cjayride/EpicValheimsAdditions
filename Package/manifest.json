@@ -1,0 +1,10 @@
+{
+  "name": "EpicValheimsAdditions_cjayfix",
+  "version_number": "2.2.5",
+  "website_url": "https://github.com/cjayride/EpicValheimsAdditions",
+  "description": "Valheim 1.0 community rebuild of Huntardy's EVA: three extra bosses, golden minibosses, altars, and vegvisirs. Vanilla biomes are not overwritten.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2360",
+    "ValheimModding-Jotunn-2.30.2"
+  ]
+}
