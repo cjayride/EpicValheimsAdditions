@@ -2,6 +2,10 @@
   <Import Project="Environment.props" Condition="Exists('Environment.props')" />
 
   <PropertyGroup>
+    <BEPINEX_CORE Condition="'$(BEPINEX_CORE)' == ''">$(VALHEIM_INSTALL)\BepInEx\core</BEPINEX_CORE>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <TargetFramework>net481</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
@@ -23,11 +27,11 @@
 
   <ItemGroup>
     <Reference Include="BepInEx">
-      <HintPath>$(VALHEIM_INSTALL)\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>$(BEPINEX_CORE)\BepInEx.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>$(VALHEIM_INSTALL)\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(BEPINEX_CORE)\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Jotunn">

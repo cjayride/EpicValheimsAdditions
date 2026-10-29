@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BepInEx.Bootstrap;
+using HarmonyLib;
 using UnityEngine;
 
 namespace EpicValheimsAdditions;
@@ -7,6 +8,12 @@ namespace EpicValheimsAdditions;
 public static class Commands
 {
 	public const string UpgradeWorldGuid = "upgrade_world";
+
+	private const string RpcCleanup = "Huntard.EpicValheimsAdditions.CmdCleanup";
+	private const string RpcUpgrade = "Huntard.EpicValheimsAdditions.CmdUpgrade";
+	private const string RpcConsoleOutput = "Huntard.EpicValheimsAdditions.CmdConsoleOutput";
+
+	private static bool rpcRegistered;
 
 	public static readonly string[] KeptLocations =
 	{
@@ -75,7 +82,7 @@ public static class Commands
 			"Remove retired EVA vegetation, creatures, stations, and items from this world. Use: EVA_cleanup confirm",
 			OnCleanup,
 			isCheat: true,
-			onlyServer: true,
+			onlyServer: false,
 			onlyAdmin: true);
 
 		_ = new Terminal.ConsoleCommand(
@@ -83,22 +90,155 @@ public static class Commands
 			"Add EVA boss altars and vegvisirs to already-generated zones (requires Upgrade World).",
 			OnUpgrade,
 			isCheat: true,
-			onlyServer: true,
+			onlyServer: false,
 			onlyAdmin: true);
 	}
 
-	private static void OnCleanup(Terminal.ConsoleEventArgs args)
+	[HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
+	private static class RegisterCommandRpcPatch
 	{
-		if (!IsServer(args))
+		private static void Postfix()
+		{
+			RegisterRpcHandlers();
+		}
+	}
+
+	private static void RegisterRpcHandlers()
+	{
+		if (rpcRegistered || ZRoutedRpc.instance == null)
 		{
 			return;
 		}
 
-		if (args.Length < 2 || args[1].ToLowerInvariant() != "confirm")
+		rpcRegistered = true;
+		ZRoutedRpc.instance.Register<bool>(RpcCleanup, RpcOnCleanup);
+		ZRoutedRpc.instance.Register(RpcUpgrade, RpcOnUpgrade);
+		ZRoutedRpc.instance.Register<string>(RpcConsoleOutput, RpcOnConsoleOutput);
+	}
+
+	private static void OnCleanup(Terminal.ConsoleEventArgs args)
+	{
+		bool confirm = args.Length >= 2 && args[1].ToLowerInvariant() == "confirm";
+		if (ZNet.instance != null && ZNet.instance.IsServer())
 		{
-			args.Context.AddString("This removes retired EVA world objects (trees, rocks, veins, creatures, Thor's Forge, alchemy station, old items).");
-			args.Context.AddString("Bosses, minibosses, altars, and vegvisirs are kept.");
-			args.Context.AddString("Run: EVA_cleanup confirm");
+			RunCleanupLocal(args, confirm);
+			return;
+		}
+
+		if (!confirm)
+		{
+			AddCleanupPreview(args);
+			return;
+		}
+
+		if (!TrySendToServer(RpcCleanup, true))
+		{
+			args.Context.AddString("Could not reach the server. Join the world and try again.");
+		}
+		else
+		{
+			args.Context.AddString("EVA_cleanup sent to server. Watch the console for results.");
+		}
+	}
+
+	private static void OnUpgrade(Terminal.ConsoleEventArgs args)
+	{
+		if (ZNet.instance != null && ZNet.instance.IsServer())
+		{
+			RunUpgradeLocal(args);
+			return;
+		}
+
+		if (!TrySendToServer(RpcUpgrade))
+		{
+			args.Context.AddString("Could not reach the server. Join the world and try again.");
+		}
+		else
+		{
+			args.Context.AddString("EVA_upgrade sent to server. Watch the console for results.");
+		}
+	}
+
+	private static void RpcOnCleanup(long sender, bool confirm)
+	{
+		if (ZNet.instance == null || !ZNet.instance.IsServer())
+		{
+			return;
+		}
+
+		if (!IsPeerAdmin(sender))
+		{
+			SendConsoleOutput(sender, "EVA_cleanup rejected: admin only.");
+			return;
+		}
+
+		if (!confirm)
+		{
+			SendCleanupPreview(sender);
+			return;
+		}
+
+		int removed = RemoveRetiredZdos(Core.GetCreatureConfiguration());
+		Core.Log.LogInfo("EVA_cleanup removed " + removed + " retired ZDOs.");
+		SendConsoleOutput(sender, "EVA_cleanup removed " + removed + " retired ZDOs.");
+
+		if (HasUpgradeWorld())
+		{
+			RunVegetationReset();
+			SendConsoleOutput(sender, "Also ran Upgrade World vegetation_reset for retired EVA plants.");
+		}
+	}
+
+	private static void RpcOnUpgrade(long sender)
+	{
+		if (ZNet.instance == null || !ZNet.instance.IsServer())
+		{
+			return;
+		}
+
+		if (!IsPeerAdmin(sender))
+		{
+			SendConsoleOutput(sender, "EVA_upgrade rejected: admin only.");
+			return;
+		}
+
+		if (!HasUpgradeWorld())
+		{
+			SendConsoleOutput(sender, "EVA_upgrade needs Upgrade World. New zones still get EVA altars from Jotunn.");
+			return;
+		}
+
+		string command = "locations_add " + string.Join(",", KeptLocations) + " start";
+		if (Console.instance != null)
+		{
+			Console.instance.TryRunCommand(command, false, false);
+		}
+
+		SendConsoleOutput(sender, "Requested Upgrade World to add EVA altars and vegvisirs.");
+	}
+
+	private static void RpcOnConsoleOutput(long sender, string message)
+	{
+		if (ZNet.instance != null && ZNet.instance.IsServer())
+		{
+			return;
+		}
+
+		if (Console.instance != null)
+		{
+			Console.instance.Print(message);
+		}
+		else
+		{
+			Core.Log.LogInfo(message);
+		}
+	}
+
+	private static void RunCleanupLocal(Terminal.ConsoleEventArgs args, bool confirm)
+	{
+		if (!confirm)
+		{
+			AddCleanupPreview(args);
 			return;
 		}
 
@@ -113,13 +253,8 @@ public static class Commands
 		}
 	}
 
-	private static void OnUpgrade(Terminal.ConsoleEventArgs args)
+	private static void RunUpgradeLocal(Terminal.ConsoleEventArgs args)
 	{
-		if (!IsServer(args))
-		{
-			return;
-		}
-
 		if (!HasUpgradeWorld())
 		{
 			args.Context.AddString("EVA_upgrade needs Upgrade World. New zones still get EVA altars from Jotunn.");
@@ -131,15 +266,75 @@ public static class Commands
 		args.Context.AddString("Requested Upgrade World to add EVA altars and vegvisirs.");
 	}
 
-	private static bool IsServer(Terminal.ConsoleEventArgs args)
+	private static void AddCleanupPreview(Terminal.ConsoleEventArgs args)
 	{
-		if (ZNet.instance != null && ZNet.instance.IsServer())
+		args.Context.AddString("This removes retired EVA world objects (trees, rocks, veins, creatures, Thor's Forge, alchemy station, old items).");
+		args.Context.AddString("Bosses, minibosses, altars, and vegvisirs are kept.");
+		args.Context.AddString("Run: EVA_cleanup confirm");
+	}
+
+	private static void SendCleanupPreview(long peerUid)
+	{
+		SendConsoleOutput(peerUid, "This removes retired EVA world objects (trees, rocks, veins, creatures, Thor's Forge, alchemy station, old items).");
+		SendConsoleOutput(peerUid, "Bosses, minibosses, altars, and vegvisirs are kept.");
+		SendConsoleOutput(peerUid, "Run: EVA_cleanup confirm");
+	}
+
+	private static void RunVegetationReset()
+	{
+		if (Console.instance != null)
 		{
-			return true;
+			Console.instance.TryRunCommand(RetiredVegetationReset, false, false);
+		}
+	}
+
+	private static bool TrySendToServer(string rpcName, params object[] parameters)
+	{
+		if (ZRoutedRpc.instance == null || ZNet.instance == null || ZNet.instance.IsServer())
+		{
+			return false;
 		}
 
-		args.Context.AddString("EVA commands are server/host only.");
-		return false;
+		ZNetPeer server = ZNet.instance.GetServerPeer();
+		if (server == null)
+		{
+			return false;
+		}
+
+		ZRoutedRpc.instance.InvokeRoutedRPC(server.m_uid, rpcName, parameters);
+		return true;
+	}
+
+	private static void SendConsoleOutput(long peerUid, string message)
+	{
+		if (ZRoutedRpc.instance == null)
+		{
+			return;
+		}
+
+		ZRoutedRpc.instance.InvokeRoutedRPC(peerUid, RpcConsoleOutput, message);
+	}
+
+	private static bool IsPeerAdmin(long peerUid)
+	{
+		if (ZNet.instance == null)
+		{
+			return false;
+		}
+
+		ZNetPeer peer = ZNet.instance.GetPeer(peerUid);
+		if (peer?.m_rpc == null)
+		{
+			return false;
+		}
+
+		ISocket socket = peer.m_rpc.GetSocket();
+		if (socket == null)
+		{
+			return false;
+		}
+
+		return ZNet.instance.IsAdmin(socket.GetHostName());
 	}
 
 	private static bool HasUpgradeWorld()

@@ -1,6 +1,8 @@
 <Project>
   <PropertyGroup>
     <VALHEIM_INSTALL>D:\SteamLibrary\steamapps\common\Valheim</VALHEIM_INSTALL>
+    <!-- Optional if BepInEx is not under the game folder (e.g. Gale-only installs): -->
+    <!-- <BEPINEX_CORE>D:\AI-Agent-Projects\Mods\libs</BEPINEX_CORE> -->
     <JOTUNN_DLL>C:\Users\YOU\AppData\Roaming\com.kesomannen.gale\valheim\profiles\default\BepInEx\plugins\ValheimModding-Jotunn\Jotunn.dll</JOTUNN_DLL>
   </PropertyGroup>
 </Project>

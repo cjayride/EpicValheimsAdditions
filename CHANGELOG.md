@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.7
+
+- `EVA_cleanup` and `EVA_upgrade` run on dedicated servers when an admin uses the in-game console while connected (RPC to server).
+
 ## 2.2.6
 
 - Restored optional EVA biome creatures with config toggles (default **on**): `DeepNorthCreatures`, `AshlandsCreatures`, `OceanCreatures`.

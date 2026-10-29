@@ -11,7 +11,7 @@ Keep the three EVA bosses, three golden minibosses, their altars, and vegvisirs.
 - `EVA_upgrade` can inject kept locations when Upgrade World is installed
 
 ## Current status
-2.2.5 packaged for Thunderstore as `EpicValheimsAdditions_cjayfix` (plugin GUID unchanged). Zip in `/dist`.
+2.2.7 built: `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll` (dedicated-server admin RPC for EVA commands).
 
 ## Environment
 - Valheim 1.0.20, Unity 6000.0.75
