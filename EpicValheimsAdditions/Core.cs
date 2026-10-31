@@ -17,7 +17,7 @@ namespace EpicValheimsAdditions;
 public class Core : BaseUnityPlugin
 {
 	public const string ModName = "Epic Valheims Additions - by Huntard";
-	public const string ModVersion = "2.2.7";
+	public const string ModVersion = "2.2.8";
 	public const string ModGUID = "Huntard.EpicValheimsAdditions";
 
 	public static string configPath = Path.Combine(BepInEx.Paths.ConfigPath, "Huntard.EpicValheimsAdditions.json");
@@ -73,6 +73,24 @@ public class Core : BaseUnityPlugin
 	{
 		FixSfx();
 		ApplyBossConfig();
+	}
+
+	private bool m_rpcHandlersRegistered;
+
+	// Registers the admin command RPCs as soon as ZRoutedRpc exists. Chosen over a harmony
+	// patch on ZNet.Awake so this mod is never on the game's network-startup path.
+	private void Update()
+	{
+		if (m_rpcHandlersRegistered)
+		{
+			return;
+		}
+
+		if (Commands.TryRegisterRpcHandlers())
+		{
+			m_rpcHandlersRegistered = true;
+			Log.LogInfo("EVA command RPCs registered.");
+		}
 	}
 
 	private void RegisterSupportPrefabs()

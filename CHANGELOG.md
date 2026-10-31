@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.8
+
+- Admin command RPC handlers are now registered from the plugin's own `Update()` once
+  `ZRoutedRpc` exists. The 2.2.7 harmony patch on `ZNet.Awake` is removed, so the mod no longer
+  runs inside the game's network-startup path (the code path every client join goes through).
+  Commands, bosses, creatures, and assets are unchanged.
+
 ## 2.2.7
 
 - `EVA_cleanup` and `EVA_upgrade` run on dedicated servers when an admin uses the in-game console while connected (RPC to server).

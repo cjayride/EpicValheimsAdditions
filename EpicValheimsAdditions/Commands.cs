@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using BepInEx.Bootstrap;
-using HarmonyLib;
 using UnityEngine;
 
 namespace EpicValheimsAdditions;
@@ -94,26 +93,26 @@ public static class Commands
 			onlyAdmin: true);
 	}
 
-	[HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
-	private static class RegisterCommandRpcPatch
+	// RPC handlers are registered lazily by Core.Update() once ZRoutedRpc exists.
+	// Deliberately NOT registered from a harmony patch on ZNet.Awake: that puts this mod
+	// inside the game's network-startup path, which is on the critical path of every join.
+	public static bool TryRegisterRpcHandlers()
 	{
-		private static void Postfix()
+		if (rpcRegistered)
 		{
-			RegisterRpcHandlers();
+			return true;
 		}
-	}
 
-	private static void RegisterRpcHandlers()
-	{
-		if (rpcRegistered || ZRoutedRpc.instance == null)
+		if (ZRoutedRpc.instance == null)
 		{
-			return;
+			return false;
 		}
 
 		rpcRegistered = true;
 		ZRoutedRpc.instance.Register<bool>(RpcCleanup, RpcOnCleanup);
 		ZRoutedRpc.instance.Register(RpcUpgrade, RpcOnUpgrade);
 		ZRoutedRpc.instance.Register<string>(RpcConsoleOutput, RpcOnConsoleOutput);
+		return true;
 	}
 
 	private static void OnCleanup(Terminal.ConsoleEventArgs args)
