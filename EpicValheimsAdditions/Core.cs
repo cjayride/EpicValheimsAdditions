@@ -17,7 +17,7 @@ namespace EpicValheimsAdditions;
 public class Core : BaseUnityPlugin
 {
 	public const string ModName = "Epic Valheims Additions - by Huntard";
-	public const string ModVersion = "2.2.8";
+	public const string ModVersion = "2.2.9";
 	public const string ModGUID = "Huntard.EpicValheimsAdditions";
 
 	public static string configPath = Path.Combine(BepInEx.Paths.ConfigPath, "Huntard.EpicValheimsAdditions.json");

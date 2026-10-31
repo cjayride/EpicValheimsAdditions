@@ -15,5 +15,6 @@ using System.Security.Permissions;
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("012b64d5-4aa6-4b1a-ac94-9584f6f07bcb")]
-[assembly: AssemblyFileVersion("2.2.7")]
-[assembly: AssemblyVersion("2.2.7.0")]
+[assembly: AssemblyFileVersion("2.2.9")]
+[assembly: AssemblyVersion("2.2.9.0")]
+[assembly: AssemblyInformationalVersion("2.2.9")]

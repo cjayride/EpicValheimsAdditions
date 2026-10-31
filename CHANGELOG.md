@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.9
+
+- Assembly metadata is now generated from the project version, so the DLL's `FileVersion` /
+  `AssemblyVersion` report 2.2.9 (2.2.7/2.2.8 builds reported a stale 2.2.7 file version).
+  No functional change from 2.2.8.
+
 ## 2.2.8
 
 - Admin command RPC handlers are now registered from the plugin's own `Update()` once
