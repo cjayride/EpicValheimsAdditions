@@ -16,6 +16,16 @@ internal static class GoldenMinibossCooldown
 
 	internal static int CooldownMinutes = 120;
 
+	private static readonly int[] GoldenPrefabHashes =
+	{
+		"Golden_Greydwarf_Miniboss".GetStableHashCode(),
+		"Golden_Troll_Miniboss".GetStableHashCode(),
+		"Golden_Wraith_Miniboss".GetStableHashCode()
+	};
+
+	private static readonly Collider[] AltarOverlapBuffer = new Collider[24];
+	private static OfferingBowl lastUsedGoldenAltar;
+
 	internal static bool IsGoldenMinibossPrefab(GameObject prefab)
 	{
 		if (prefab == null)
@@ -35,6 +45,19 @@ internal static class GoldenMinibossCooldown
 		return false;
 	}
 
+	private static bool IsGoldenPrefabHash(int prefabHash)
+	{
+		foreach (int hash in GoldenPrefabHashes)
+		{
+			if (prefabHash == hash)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static bool IsGoldenMinibossCharacter(Character character)
 	{
 		if (character == null || character.m_nview == null || !character.m_nview.IsValid())
@@ -42,16 +65,7 @@ internal static class GoldenMinibossCooldown
 			return false;
 		}
 
-		string prefabName = character.name.Replace("(Clone)", string.Empty);
-		foreach (string golden in GoldenBossPrefabs)
-		{
-			if (prefabName == golden || prefabName.StartsWith(golden, StringComparison.Ordinal))
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return IsGoldenPrefabHash(character.m_nview.GetZDO().GetPrefab());
 	}
 
 	private static double NowSeconds()
@@ -102,6 +116,7 @@ internal static class GoldenMinibossCooldown
 			double cooldownEnd = BitConverter.Int64BitsToDouble(zdo.GetLong(ZdoCooldownEndKey, 0L));
 			if (NowSeconds() >= cooldownEnd)
 			{
+				lastUsedGoldenAltar = __instance;
 				return true;
 			}
 
@@ -132,23 +147,38 @@ internal static class GoldenMinibossCooldown
 
 	private static OfferingBowl FindNearestGoldenAltar(Vector3 position)
 	{
-		OfferingBowl[] bowls = UnityEngine.Object.FindObjectsByType<OfferingBowl>(FindObjectsSortMode.None);
-		OfferingBowl best = null;
-		float bestDistance = 60f;
-		foreach (OfferingBowl bowl in bowls)
+		if (lastUsedGoldenAltar != null && lastUsedGoldenAltar.m_nview != null && lastUsedGoldenAltar.m_nview.IsValid()
+			&& IsGoldenMinibossPrefab(lastUsedGoldenAltar.m_bossPrefab)
+			&& (position - lastUsedGoldenAltar.transform.position).sqrMagnitude <= 60f * 60f)
 		{
-			if (!IsGoldenMinibossPrefab(bowl.m_bossPrefab))
+			return lastUsedGoldenAltar;
+		}
+
+		int hits = Physics.OverlapSphereNonAlloc(position, 60f, AltarOverlapBuffer);
+		OfferingBowl best = null;
+		float bestDistanceSq = 60f * 60f;
+		for (int i = 0; i < hits; i++)
+		{
+			Collider collider = AltarOverlapBuffer[i];
+			AltarOverlapBuffer[i] = null;
+			if (collider == null)
 			{
 				continue;
 			}
 
-			float distance = Vector3.Distance(position, bowl.transform.position);
-			if (distance >= bestDistance)
+			OfferingBowl bowl = collider.GetComponentInParent<OfferingBowl>();
+			if (bowl == null || !IsGoldenMinibossPrefab(bowl.m_bossPrefab))
 			{
 				continue;
 			}
 
-			bestDistance = distance;
+			float distanceSq = (position - bowl.transform.position).sqrMagnitude;
+			if (distanceSq >= bestDistanceSq)
+			{
+				continue;
+			}
+
+			bestDistanceSq = distanceSq;
 			best = bowl;
 		}
 

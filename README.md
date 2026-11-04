@@ -2,7 +2,7 @@
 
 ### Community Rebuild for Valheim 1.0
 
-**Current release:** [2.2.7](https://github.com/cjayride/EpicValheimsAdditions/releases/tag/v2.2.7) · **Source:** [github.com/cjayride/EpicValheimsAdditions](https://github.com/cjayride/EpicValheimsAdditions)
+**Current release:** [2.2.10](https://github.com/cjayride/EpicValheimsAdditions/releases/tag/v2.2.10) · **Source:** [github.com/cjayride/EpicValheimsAdditions](https://github.com/cjayride/EpicValheimsAdditions)
 
 A community rebuild of **Huntardy's Epic Valheim Additions**, updated for Valheim 1.0.
 

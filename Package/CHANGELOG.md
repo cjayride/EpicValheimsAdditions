@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.10
+
+- Compatibility check against Valheim 1.0.21 (Steam build 26249040).
+- Load-time and FPS-oriented cleanup: narrower Harmony patching, cached asset-name lookup,
+  skip unused creature prefabs, coroutine RPC registration, cheaper golden-altar cooldown checks.
+
 ## 2.2.7
 
 - `EVA_cleanup` and `EVA_upgrade` run on dedicated servers when an admin uses the in-game console while connected (RPC to server).

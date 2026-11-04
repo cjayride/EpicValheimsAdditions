@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.10
+
+- Built against the current Steam Valheim public branch (1.0.21, build 26249040). Harmony targets
+  `OfferingBowl.InitiateSpawnBoss` and `Character.OnDeath` are still present.
+- Faster load: Harmony only patches EVA cooldown types (not the whole assembly), bundle asset names
+  are cached, and disabled creature packs are not loaded into Jotunn.
+- Less hitching: admin RPC wait uses a coroutine instead of a permanent `Update()`, golden-miniboss
+  death checks use prefab hashes, and altar lookup no longer scans every `OfferingBowl` in the scene.
+
 ## 2.2.9
 
 - Assembly metadata is now generated from the project version, so the DLL's `FileVersion` /

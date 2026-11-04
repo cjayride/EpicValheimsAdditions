@@ -93,7 +93,7 @@ public static class Commands
 			onlyAdmin: true);
 	}
 
-	// RPC handlers are registered lazily by Core.Update() once ZRoutedRpc exists.
+	// RPC handlers are registered lazily by Core once ZRoutedRpc exists.
 	// Deliberately NOT registered from a harmony patch on ZNet.Awake: that puts this mod
 	// inside the game's network-startup path, which is on the critical path of every join.
 	public static bool TryRegisterRpcHandlers()

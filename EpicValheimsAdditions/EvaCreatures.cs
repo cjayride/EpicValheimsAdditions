@@ -46,7 +46,7 @@ internal static class EvaCreatures
 		}
 		else
 		{
-			RegisterPrefabOnly(registerPrefab, DeepNorthPrefabs);
+			Core.Log.LogInfo("EVA Deep North creatures are turned off");
 		}
 
 		if (creatures.AshlandsCreatures)
@@ -57,7 +57,6 @@ internal static class EvaCreatures
 		}
 		else
 		{
-			RegisterPrefabOnly(registerPrefab, AshlandsPrefabs);
 			Core.Log.LogInfo("EVA Ashlands creatures are turned off");
 		}
 
@@ -67,24 +66,10 @@ internal static class EvaCreatures
 		}
 		else
 		{
-			RegisterPrefabOnly(registerPrefab, OceanPrefabs);
 			Core.Log.LogInfo("EVA Ocean creatures are turned off");
 		}
 
-		if (!creatures.DeepNorthCreatures)
-		{
-			Core.Log.LogInfo("EVA Deep North creatures are turned off");
-		}
-
 		Core.Log.LogInfo("Loaded EVA creatures.");
-	}
-
-	private static void RegisterPrefabOnly(Action<string> registerPrefab, string[] prefabNames)
-	{
-		foreach (string name in prefabNames)
-		{
-			registerPrefab(name);
-		}
 	}
 
 	private static void AddDeepNorth(AssetBundle assetBundle)

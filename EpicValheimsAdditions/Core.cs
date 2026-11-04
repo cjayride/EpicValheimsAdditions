@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using BepInEx;
@@ -17,7 +18,7 @@ namespace EpicValheimsAdditions;
 public class Core : BaseUnityPlugin
 {
 	public const string ModName = "Epic Valheims Additions - by Huntard";
-	public const string ModVersion = "2.2.9";
+	public const string ModVersion = "2.2.10";
 	public const string ModGUID = "Huntard.EpicValheimsAdditions";
 
 	public static string configPath = Path.Combine(BepInEx.Paths.ConfigPath, "Huntard.EpicValheimsAdditions.json");
@@ -57,12 +58,17 @@ public class Core : BaseUnityPlugin
 		contentConfig = LoadContentConfig();
 		s_contentConfig = contentConfig;
 		GoldenMinibossCooldown.CooldownMinutes = contentConfig.GoldenMinibossCooldownMinutes;
-		new Harmony(ModGUID).PatchAll(typeof(GoldenMinibossCooldown).Assembly);
+		Harmony harmony = new Harmony(ModGUID);
+		foreach (Type nested in typeof(GoldenMinibossCooldown).GetNestedTypes(System.Reflection.BindingFlags.NonPublic))
+		{
+			harmony.PatchAll(nested);
+		}
 		RegisterSupportPrefabs();
 		RegisterEncounters();
 		EvaCreatures.Register(assetBundle, contentConfig.Creatures, RegisterPrefab);
 		RegisterSummonItems();
 		Commands.Register();
+		StartCoroutine(RegisterRpcWhenReady());
 
 		ZoneManager.OnVanillaLocationsAvailable += AddLocations;
 		PrefabManager.OnPrefabsRegistered += OnPrefabsReady;
@@ -75,22 +81,16 @@ public class Core : BaseUnityPlugin
 		ApplyBossConfig();
 	}
 
-	private bool m_rpcHandlersRegistered;
-
 	// Registers the admin command RPCs as soon as ZRoutedRpc exists. Chosen over a harmony
 	// patch on ZNet.Awake so this mod is never on the game's network-startup path.
-	private void Update()
+	private IEnumerator RegisterRpcWhenReady()
 	{
-		if (m_rpcHandlersRegistered)
+		while (!Commands.TryRegisterRpcHandlers())
 		{
-			return;
+			yield return null;
 		}
 
-		if (Commands.TryRegisterRpcHandlers())
-		{
-			m_rpcHandlersRegistered = true;
-			Log.LogInfo("EVA command RPCs registered.");
-		}
+		Log.LogInfo("EVA command RPCs registered.");
 	}
 
 	private void RegisterSupportPrefabs()
@@ -282,6 +282,8 @@ public class Core : BaseUnityPlugin
 		}));
 	}
 
+	private string[] cachedAssetNames;
+
 	private GameObject LoadEvaGameObject(string assetName)
 	{
 		GameObject prefab = assetBundle.LoadAsset<GameObject>(assetName);
@@ -290,10 +292,14 @@ public class Core : BaseUnityPlugin
 			return prefab;
 		}
 
-		string needle = assetName.ToLowerInvariant();
-		foreach (string path in assetBundle.GetAllAssetNames())
+		if (cachedAssetNames == null)
 		{
-			if (path.IndexOf(needle, StringComparison.OrdinalIgnoreCase) < 0)
+			cachedAssetNames = assetBundle.GetAllAssetNames();
+		}
+
+		foreach (string path in cachedAssetNames)
+		{
+			if (path.IndexOf(assetName, StringComparison.OrdinalIgnoreCase) < 0)
 			{
 				continue;
 			}
@@ -555,7 +561,7 @@ public class Core : BaseUnityPlugin
 	{
 		foreach (string attackName in attackNames)
 		{
-			if (attackName.ToLowerInvariant().Contains("projectile"))
+			if (attackName.IndexOf("projectile", StringComparison.OrdinalIgnoreCase) >= 0)
 			{
 				Projectile projectile = PrefabManager.Cache.GetPrefab<Projectile>(attackName);
 				if (projectile == null)
@@ -620,7 +626,7 @@ public class Core : BaseUnityPlugin
 		{
 			try
 			{
-				if (attack.AttackName.ToLowerInvariant().Contains("projectile"))
+				if (attack.AttackName.IndexOf("projectile", StringComparison.OrdinalIgnoreCase) >= 0)
 				{
 					Projectile projectile = PrefabManager.Cache.GetPrefab<Projectile>(attack.AttackName);
 					if (projectile != null && attack.Damages.HasValue)

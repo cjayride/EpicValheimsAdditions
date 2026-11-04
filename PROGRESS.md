@@ -1,42 +1,40 @@
-# EpicValheimsAdditions — Boss-Only Update
+# EpicValheimsAdditions — 1.0.21 compatibility + performance
 
 ## Goal
-Keep the three EVA bosses, three golden minibosses, their altars, and vegvisirs. Leave vanilla biomes unchanged. Add a world cleanup command for retired EVA objects.
+Confirm EVA compiles against the latest Steam Valheim, then reduce load cost and runtime hitching.
 
 ## Acceptance criteria
-- Project compiles against current Valheim 1.0 / Jotunn 2.30.2
-- No EVA weapons, ores, vegetation, or extra creatures are registered
-- Summon items use vanilla late-game recipes
-- `EVA_cleanup confirm` removes retired world ZDOs
-- `EVA_upgrade` can inject kept locations when Upgrade World is installed
+- Project compiles against current Valheim public branch + Jotunn 2.30.2
+- Harmony targets used by golden miniboss cooldown still exist
+- No extra per-frame Update after RPC registration
+- Disabled creature packs are not loaded
+- Golden death path does not scan every OfferingBowl
 
 ## Current status
-2.2.7 built: `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll` (dedicated-server admin RPC for EVA commands).
+2.2.10 built: `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll`
 
 ## Environment
-- Valheim 1.0.20, Unity 6000.0.75
+- Steam Valheim public buildid 26249040 (Patch 1.0.21, Oct 28 2026)
+- Installed path `D:\SteamLibrary\steamapps\common\Valheim`
 - Jotunn 2.30.2
-- EVA version 2.2.1
+- EVA version 2.2.10
 
 ## Files changed
-- `EpicValheimsAdditions.csproj` — net481, HintPaths, publicizer
-- `Environment.props` — Valheim and Jotunn paths
-- `EpicValheimsAdditions/Core.cs` — boss-only registration
-- `EpicValheimsAdditions/Commands.cs` — EVA_cleanup / EVA_upgrade
-- `EpicValheimsAdditions/BossToggleConfiguration.cs` — new toggles
-- `EpicValheimsAdditions/EVAConfiguration.cs` — Bosses section
-- `EpicValheimsAdditions/CustomAttack.cs` — HitData.DamageTypes
-- `EpicValheimsAdditions/BossBalance.cs` — Mistlands / Ashlands / Deep North defaults + migration
-- `EpicValheimsAdditions/GoldenMinibossCooldown.cs` — Harmony altar cooldown after kill
-- `Properties/AssemblyInfo.cs` — 2.2.1
-- `beta_cjaycraft/config/drop_that.character_drop.EvaBalance.cfg` (+ server copy) — boss-only drop fixes, coin tier order
-- Deleted `UpgradeWorld/Upgrade.cs` and `UpgradeWorld/CommandRegistration.cs`
+- `EpicValheimsAdditions/Core.cs` — 2.2.10, cached bundle names, coroutine RPC wait, nested Harmony patches only
+- `EpicValheimsAdditions/EvaCreatures.cs` — do not load creature prefabs when toggles are off
+- `EpicValheimsAdditions/GoldenMinibossCooldown.cs` — prefab-hash death check, last-altar + overlap lookup
+- `EpicValheimsAdditions/Commands.cs` — comment only
+- `EpicValheimsAdditions.csproj` — UnityEngine.PhysicsModule
+- `Properties/AssemblyInfo.cs` — 2.2.10
+- `CHANGELOG.md`, `Package/CHANGELOG.md`
 
 ## Commands run
-- `dotnet build EpicValheimsAdditions.csproj -c Release` — succeeded
-- Output: `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll`
+- SteamDB public branch buildid 26249040 matches local `appmanifest_892970.acf`
+- assembly_valheim contains `InitiateSpawnBoss`, `OnDeath`, `OfferingBowl`, `DeepNorth`, `AshLands`
+- `dotnet build EpicValheimsAdditions.csproj -c Release` — succeeded (1 unused LitJson CLS warning)
+- DLL FileVersion 2.2.10
 
 ## Remaining issues
-- In-game verification not run (boss summons, vegvisirs, cleanup)
-- Existing EVA weapons/items in inventories will vanish because those prefabs are no longer registered
-- Cosmetic zone vegetation without ZDOs may need Upgrade World `vegetation_reset` in addition to EVA_cleanup
+- In-game verification not run (boss summons, vegvisirs, cleanup, golden cooldown)
+- Asset bundle still loads synchronously on Awake (inherent Unity bundle cost)
+- Extra biome creatures still add spawn-system work when their toggles are on
