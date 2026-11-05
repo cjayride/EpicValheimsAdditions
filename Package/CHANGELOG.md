@@ -5,6 +5,7 @@
 - Golden miniboss aura is dimmed (`GoldenAuraIntensity`, default `0.35`; `1` is original brightness).
 - Golden altar trophy costs are configurable. Defaults: Greydwarf **10**, Troll **6**, Wraith **8**
   (prefab value was 4). Existing worlds pick up the new counts on altar load.
+- Golden miniboss altars show required trophy count on hover (e.g. `8× Wraith trophy`).
 
 ## 2.2.10
 

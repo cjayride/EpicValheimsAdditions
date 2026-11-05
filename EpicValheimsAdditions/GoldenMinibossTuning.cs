@@ -172,4 +172,36 @@ internal static class GoldenMinibossTuning
 			}
 		}
 	}
+
+	[HarmonyPatch(typeof(OfferingBowl), nameof(OfferingBowl.GetHoverText))]
+	private static class GetHoverTextPatch
+	{
+		private static void Postfix(OfferingBowl __instance, ref string __result)
+		{
+			if (__instance == null || !GoldenMinibossCooldown.IsGoldenMinibossPrefab(__instance.m_bossPrefab))
+			{
+				return;
+			}
+
+			if (__instance.m_bossItem == null)
+			{
+				return;
+			}
+
+			int cost = __instance.m_bossItems;
+			if (cost <= 0)
+			{
+				cost = TrophyCostForBoss(__instance.m_bossPrefab);
+			}
+
+			if (cost <= 0)
+			{
+				return;
+			}
+
+			string itemName = __instance.m_bossItem.m_itemData.m_shared.m_name;
+			string localizedItem = Localization.instance.Localize(itemName);
+			__result += $"\n[<color=yellow>]{cost}× {localizedItem}[/color]";
+		}
+	}
 }
