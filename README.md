@@ -42,7 +42,8 @@ Ursar **taming** from original EVA is not included — only world spawns.
 ### 🪙 Golden Minibosses
 
 - Golden miniboss encounters in the Meadows, Black Forest, and Swamp.
-- Altars use their matching vanilla trophies.
+- Altars use their matching vanilla trophies (defaults: **10** Greydwarf, **6** Troll, **8** Wraith).
+- Golden glow can be dimmed with `GoldenAuraIntensity` (default **0.35**).
 - Configurable boss health, attack values, and content availability.
 - Default altar cooldown of **120 real-time minutes** after a golden miniboss is defeated.
 - Cooldown can be customized or disabled.
@@ -98,6 +99,12 @@ All summon items use vanilla crafting stations.
 
 Golden miniboss altars continue to use their corresponding vanilla trophies.
 
+| Altar | Trophy | Default amount |
+|---|---|---|
+| **Stamina Greydwarf** | Matching vanilla trophy | 10 |
+| **Stamina Troll** | Troll trophy | 6 |
+| **Stamina Wraith** | Wraith trophy | 8 |
+
 ### Golden Miniboss Cooldown
 
 The default cooldown is **120 real-time minutes** after a kill.
@@ -116,7 +123,7 @@ Configuration files are located in:
 | File | Purpose |
 |---|---|
 | `Huntard.EpicValheimsAdditions.json` | Boss health and attack values |
-| `Huntard.EpicValheimsAdditions_Content.json` | Bosses, creatures, golden minibosses, cooldown |
+| `Huntard.EpicValheimsAdditions_Content.json` | Bosses, creatures, golden minibosses, cooldown, aura, trophy costs |
 
 Boss toggles: `MistlandsBoss`, `AshlandsBoss`, `DeepNorthBoss`, `GoldenMinibosses`
 

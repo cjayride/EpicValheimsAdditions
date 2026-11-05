@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.11
+
+- Golden miniboss aura is dimmed (`GoldenAuraIntensity`, default `0.35`; `1` is original brightness).
+- Golden altar trophy costs are configurable. Defaults: Greydwarf **10**, Troll **6**, Wraith **8**
+  (prefab value was 4). Existing worlds pick up the new counts on altar load.
+
 ## 2.2.10
 
 - Compatibility check against Valheim 1.0.21 (Steam build 26249040).

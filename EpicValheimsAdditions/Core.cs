@@ -18,7 +18,7 @@ namespace EpicValheimsAdditions;
 public class Core : BaseUnityPlugin
 {
 	public const string ModName = "Epic Valheims Additions - by Huntard";
-	public const string ModVersion = "2.2.10";
+	public const string ModVersion = "2.2.11";
 	public const string ModGUID = "Huntard.EpicValheimsAdditions";
 
 	public static string configPath = Path.Combine(BepInEx.Paths.ConfigPath, "Huntard.EpicValheimsAdditions.json");
@@ -42,6 +42,8 @@ public class Core : BaseUnityPlugin
 		"Boss toggles: MistlandsBoss / DeepNorthBoss / AshlandsBoss / GoldenMinibosses. " +
 		"Creature toggles: DeepNorthCreatures / AshlandsCreatures / OceanCreatures (default on). " +
 		"GoldenMinibossCooldownMinutes sets altar cooldown after a golden kill (default 120). " +
+		"GoldenAuraIntensity dims golden miniboss glow (default 0.35; 1 = original). " +
+		"GoldenGreydwarfTrophyCost / GoldenTrollTrophyCost / GoldenWraithTrophyCost set altar offering counts (defaults 10 / 6 / 8). " +
 		"Use EVA_cleanup confirm to strip retired EVA objects (including creatures when their toggles are off).";
 
 	private void Awake()
@@ -58,8 +60,13 @@ public class Core : BaseUnityPlugin
 		contentConfig = LoadContentConfig();
 		s_contentConfig = contentConfig;
 		GoldenMinibossCooldown.CooldownMinutes = contentConfig.GoldenMinibossCooldownMinutes;
+		GoldenMinibossTuning.ApplyFromConfig(contentConfig);
 		Harmony harmony = new Harmony(ModGUID);
 		foreach (Type nested in typeof(GoldenMinibossCooldown).GetNestedTypes(System.Reflection.BindingFlags.NonPublic))
+		{
+			harmony.PatchAll(nested);
+		}
+		foreach (Type nested in typeof(GoldenMinibossTuning).GetNestedTypes(System.Reflection.BindingFlags.NonPublic))
 		{
 			harmony.PatchAll(nested);
 		}
@@ -79,6 +86,7 @@ public class Core : BaseUnityPlugin
 	{
 		FixSfx();
 		ApplyBossConfig();
+		GoldenMinibossTuning.ApplyToPrefabs();
 	}
 
 	// Registers the admin command RPCs as soon as ZRoutedRpc exists. Chosen over a harmony
@@ -685,10 +693,22 @@ public class Core : BaseUnityPlugin
 		EVAConfiguration loaded = list[0];
 		if (loaded.Bosses != null)
 		{
+			bool saved = false;
 			if (EnsureCreaturesSection(loaded))
 			{
-				SaveEVAConfiguration(loaded);
+				saved = true;
 				Logger.LogInfo("Added default creature toggles to content configuration.");
+			}
+
+			if (EnsureGoldenMinibossSettings(loaded))
+			{
+				saved = true;
+				Logger.LogInfo("Added default golden miniboss aura and trophy costs.");
+			}
+
+			if (saved)
+			{
+				SaveEVAConfiguration(loaded);
 			}
 			else
 			{
@@ -711,7 +731,11 @@ public class Core : BaseUnityPlugin
 				GoldenMinibosses = true
 			},
 			Creatures = GetDefaultCreatureConfiguration(),
-			GoldenMinibossCooldownMinutes = 120
+			GoldenMinibossCooldownMinutes = 120,
+			GoldenAuraIntensity = 0.35f,
+			GoldenGreydwarfTrophyCost = 10,
+			GoldenTrollTrophyCost = 6,
+			GoldenWraithTrophyCost = 8
 		};
 		SaveEVAConfiguration(fromNested);
 			Logger.LogInfo("Migrated nested content configuration to boss-only toggles.");
@@ -731,7 +755,11 @@ public class Core : BaseUnityPlugin
 				GoldenMinibosses = true
 			},
 			Creatures = GetDefaultCreatureConfiguration(),
-			GoldenMinibossCooldownMinutes = 120
+			GoldenMinibossCooldownMinutes = 120,
+			GoldenAuraIntensity = 0.35f,
+			GoldenGreydwarfTrophyCost = 10,
+			GoldenTrollTrophyCost = 6,
+			GoldenWraithTrophyCost = 8
 		};
 		SaveEVAConfiguration(migrated);
 		Logger.LogInfo("Migrated old content configuration to boss-only toggles.");
@@ -757,6 +785,10 @@ public class Core : BaseUnityPlugin
 				GoldenMinibosses = true
 			},
 			GoldenMinibossCooldownMinutes = 120,
+			GoldenAuraIntensity = 0.35f,
+			GoldenGreydwarfTrophyCost = 10,
+			GoldenTrollTrophyCost = 6,
+			GoldenWraithTrophyCost = 8,
 			Creatures = GetDefaultCreatureConfiguration()
 		};
 	}
@@ -780,6 +812,36 @@ public class Core : BaseUnityPlugin
 
 		loaded.Creatures = GetDefaultCreatureConfiguration();
 		return true;
+	}
+
+	private static bool EnsureGoldenMinibossSettings(EVAConfiguration loaded)
+	{
+		bool changed = false;
+		if (loaded.GoldenAuraIntensity <= 0f)
+		{
+			loaded.GoldenAuraIntensity = 0.35f;
+			changed = true;
+		}
+
+		if (loaded.GoldenGreydwarfTrophyCost <= 0)
+		{
+			loaded.GoldenGreydwarfTrophyCost = 10;
+			changed = true;
+		}
+
+		if (loaded.GoldenTrollTrophyCost <= 0)
+		{
+			loaded.GoldenTrollTrophyCost = 6;
+			changed = true;
+		}
+
+		if (loaded.GoldenWraithTrophyCost <= 0)
+		{
+			loaded.GoldenWraithTrophyCost = 8;
+			changed = true;
+		}
+
+		return changed;
 	}
 
 	internal static List<T> GetJson<T>(string path)
