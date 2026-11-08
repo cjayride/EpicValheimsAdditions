@@ -42,6 +42,7 @@ Ursar **taming** from original EVA is not included — only world spawns.
 ### 🪙 Golden Minibosses
 
 - Golden miniboss encounters in the Meadows, Black Forest, and Swamp.
+- Altars show the required offering and count on hover (boss altars and golden minibosses).
 - Altars use their matching vanilla trophies (defaults: **10** Greydwarf, **6** Troll, **8** Wraith).
 - Golden glow can be dimmed with `GoldenAuraIntensity` (default **0.35**).
 - Configurable boss health, attack values, and content availability.

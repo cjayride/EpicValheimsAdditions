@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.12
+
+- EVA boss altars (Svartalfar Queen, Hel Demon, Jotunn) show the required offering and count on hover.
+- Golden miniboss altar hover uses the same `Offer: N× item` format.
+
 ## 2.2.11
 
 - Golden miniboss aura is dimmed (`GoldenAuraIntensity`, default `0.35`; `1` is original brightness).

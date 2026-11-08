@@ -31,6 +31,9 @@ internal static class GoldenMinibossTuning
 		SetAltarCost("StaminaGreydwarf", GreydwarfTrophyCost);
 		SetAltarCost("StaminaTroll", TrollTrophyCost);
 		SetAltarCost("StaminaWraith", WraithTrophyCost);
+		BindBossAltar("SvartalfrQueenAltar_New", "CursedEffigy", 1);
+		BindBossAltar("BlazingDamnedOneAltar", "FenrirsHeart", 1);
+		BindBossAltar("JotunnAltar", "YmirsSoulEssence", 1);
 	}
 
 	internal static int TrophyCostForBoss(GameObject bossPrefab)
@@ -72,6 +75,117 @@ internal static class GoldenMinibossTuning
 		{
 			bowls[i].m_bossItems = amount;
 		}
+	}
+
+	private static void BindBossAltar(string altarPrefab, string itemPrefab, int amount)
+	{
+		GameObject altar = PrefabManagerGet(altarPrefab);
+		if (altar == null)
+		{
+			return;
+		}
+
+		ItemDrop item = GetItemDrop(itemPrefab);
+		OfferingBowl[] bowls = altar.GetComponentsInChildren<OfferingBowl>(true);
+		for (int i = 0; i < bowls.Length; i++)
+		{
+			if (item != null)
+			{
+				bowls[i].m_bossItem = item;
+			}
+
+			if (amount > 0)
+			{
+				bowls[i].m_bossItems = amount;
+			}
+		}
+	}
+
+	private static ItemDrop GetItemDrop(string prefabName)
+	{
+		GameObject prefab = PrefabManagerGet(prefabName);
+		return prefab == null ? null : prefab.GetComponent<ItemDrop>();
+	}
+
+	private static bool TryGetOffering(OfferingBowl bowl, out ItemDrop item, out int cost)
+	{
+		item = bowl.m_bossItem;
+		cost = bowl.m_bossItems;
+		if (item == null)
+		{
+			ResolveOfferingFromBoss(bowl.m_bossPrefab, out item, out int fallbackCost);
+			if (cost <= 0)
+			{
+				cost = fallbackCost;
+			}
+		}
+
+		if (cost <= 0)
+		{
+			cost = TrophyCostForBoss(bowl.m_bossPrefab);
+		}
+
+		if (cost <= 0)
+		{
+			cost = 1;
+		}
+
+		return item != null && item.m_itemData?.m_shared != null;
+	}
+
+	private static void ResolveOfferingFromBoss(GameObject bossPrefab, out ItemDrop item, out int cost)
+	{
+		item = null;
+		cost = 1;
+		if (bossPrefab == null)
+		{
+			return;
+		}
+
+		string name = PrefabBaseName(bossPrefab);
+		if (name == "SvartalfarQueen")
+		{
+			item = GetItemDrop("CursedEffigy");
+			return;
+		}
+
+		if (name == "HelDemon")
+		{
+			item = GetItemDrop("FenrirsHeart");
+			return;
+		}
+
+		if (name == "Jotunn")
+		{
+			item = GetItemDrop("YmirsSoulEssence");
+		}
+	}
+
+	private static bool IsEvaAltar(OfferingBowl bowl)
+	{
+		if (bowl == null)
+		{
+			return false;
+		}
+
+		if (GoldenMinibossCooldown.IsGoldenMinibossPrefab(bowl.m_bossPrefab))
+		{
+			return true;
+		}
+
+		if (bowl.m_bossPrefab == null)
+		{
+			return false;
+		}
+
+		string name = PrefabBaseName(bowl.m_bossPrefab);
+		return name == "SvartalfarQueen" || name == "HelDemon" || name == "Jotunn";
+	}
+
+	private static string FormatOfferingLine(ItemDrop item, int cost)
+	{
+		string itemName = Localization.instance.Localize(item.m_itemData.m_shared.m_name);
+		return $"\n[<color=yellow>]Offer: {cost}× {itemName}[/color]";
 	}
 
 	private static void DimAura(string prefabName)
@@ -155,6 +269,18 @@ internal static class GoldenMinibossTuning
 		return Jotunn.Managers.PrefabManager.Instance.GetPrefab(name);
 	}
 
+	private static string PrefabBaseName(GameObject prefab)
+	{
+		string name = prefab.name;
+		const string clone = "(Clone)";
+		if (name.EndsWith(clone))
+		{
+			name = name.Substring(0, name.Length - clone.Length).TrimEnd();
+		}
+
+		return name;
+	}
+
 	[HarmonyPatch(typeof(OfferingBowl), "Awake")]
 	private static class OfferingBowlAwakePatch
 	{
@@ -170,6 +296,19 @@ internal static class GoldenMinibossTuning
 			{
 				__instance.m_bossItems = cost;
 			}
+
+			if (__instance.m_bossItem == null)
+			{
+				ResolveOfferingFromBoss(__instance.m_bossPrefab, out ItemDrop item, out int fallbackCost);
+				if (item != null)
+				{
+					__instance.m_bossItem = item;
+					if (__instance.m_bossItems <= 0)
+					{
+						__instance.m_bossItems = fallbackCost;
+					}
+				}
+			}
 		}
 	}
 
@@ -178,30 +317,18 @@ internal static class GoldenMinibossTuning
 	{
 		private static void Postfix(OfferingBowl __instance, ref string __result)
 		{
-			if (__instance == null || !GoldenMinibossCooldown.IsGoldenMinibossPrefab(__instance.m_bossPrefab))
+			if (!IsEvaAltar(__instance) || !TryGetOffering(__instance, out ItemDrop item, out int cost))
 			{
 				return;
 			}
 
-			if (__instance.m_bossItem == null)
+			string line = FormatOfferingLine(item, cost);
+			if (!string.IsNullOrEmpty(__result) && __result.IndexOf(line, System.StringComparison.Ordinal) >= 0)
 			{
 				return;
 			}
 
-			int cost = __instance.m_bossItems;
-			if (cost <= 0)
-			{
-				cost = TrophyCostForBoss(__instance.m_bossPrefab);
-			}
-
-			if (cost <= 0)
-			{
-				return;
-			}
-
-			string itemName = __instance.m_bossItem.m_itemData.m_shared.m_name;
-			string localizedItem = Localization.instance.Localize(itemName);
-			__result += $"\n[<color=yellow>]{cost}× {localizedItem}[/color]";
+			__result = (__result ?? string.Empty) + line;
 		}
 	}
 }

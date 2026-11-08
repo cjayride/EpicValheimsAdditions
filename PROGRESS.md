@@ -1,28 +1,24 @@
-# EpicValheimsAdditions — golden aura + trophy costs
+# EpicValheimsAdditions — altar offering hover
 
 ## Goal
-Dim golden miniboss aura and raise altar trophy costs for the CJAYCRAFT pack.
+Show required offering type and count on EVA boss altars (and keep the same format on golden miniboss altars).
 
 ## Acceptance criteria
-- Aura intensity configurable (`GoldenAuraIntensity`, default 0.35)
-- Trophy costs configurable; Wraith default 8 (was 4 on prefab)
-- Existing world altars pick up new `m_bossItems`
+- Hovering Svartalfar Queen / Hel Demon / Jotunn altars shows `Offer: N× item`
+- Golden miniboss altars use the same hover format
+- Existing worlds pick up `m_bossItem` if it was missing on the placed altar
 - Release build succeeds
 
 ## Current status
-Complete. 2.2.11 built.
+Complete. 2.2.12 built.
 
 ## Files changed
-- `EpicValheimsAdditions/GoldenMinibossTuning.cs` (new)
-- `EpicValheimsAdditions/EVAConfiguration.cs`, `Core.cs`
-- `EpicValheimsAdditions.csproj` (ParticleSystemModule)
-- docs / changelog / manifest 2.2.11
-- client + server `Huntard.EpicValheimsAdditions_Content.json`
+- `EpicValheimsAdditions/GoldenMinibossTuning.cs` — bind EVA boss offerings, hover all EVA altars
+- Version 2.2.12 (Core, AssemblyInfo, Package/manifest, changelogs, README)
 
 ## Commands run
 - `dotnet build EpicValheimsAdditions.csproj -c Release` — succeeded
-- DLL FileVersion 2.2.11 at `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll`
+- DLL FileVersion 2.2.12 at `D:\AI-Agent-Projects\cjaycraft\EpicValheimsAdditions\bin\Release\net481\EpicValheimsAdditions.dll`
 
 ## Remaining issues
-- In-game brightness still needs a look; tune `GoldenAuraIntensity` if 0.35 is too dark or still too bright
-- Pack DLL not installed to Gale in this task
+- In-game hover still needs a player check after install; not copied to Gale/modpack in this task
